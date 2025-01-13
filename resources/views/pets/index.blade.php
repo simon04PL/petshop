@@ -26,6 +26,16 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <h2>Add New Pet</h2>
         <form action="{{ route('pets.store') }}" method="POST">
             @csrf
@@ -39,7 +49,11 @@
             </div>
             <div class="form-group">
                 <label for="status">Status:</label>
-                <input type="text" class="form-control" id="status" name="status" required>
+                <select class="form-control" id="status" name="status" required>
+                    <option value="available">Available</option>
+                    <option value="pending">Pending</option>
+                    <option value="sold">Sold</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="photoUrls">Photo URL:</label>
@@ -119,7 +133,11 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="status{{ $pet['id'] }}">Status:</label>
-                                                    <input type="text" class="form-control" id="status{{ $pet['id'] }}" name="status" value="{{ $pet['status'] ?? '' }}" required>
+                                                    <select class="form-control" id="status{{ $pet['id'] }}" name="status" required>
+                                                        <option value="available" {{ $pet['status'] == 'available' ? 'selected' : '' }}>Available</option>
+                                                        <option value="pending" {{ $pet['status'] == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                        <option value="sold" {{ $pet['status'] == 'sold' ? 'selected' : '' }}>Sold</option>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="photoUrls{{ $pet['id'] }}">Photo URL:</label>

@@ -14,6 +14,10 @@ use App\Http\Controllers\PetController;
 |
 */
 
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
+
 Route::get('/pets', [PetController::class, 'index'])->name('pets.index');
 Route::post('/pets', [PetController::class, 'store'])->name('pets.store');
 Route::put('/pets/{id}', [PetController::class, 'update'])->name('pets.update');

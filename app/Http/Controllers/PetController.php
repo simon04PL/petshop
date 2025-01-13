@@ -27,7 +27,8 @@ class PetController extends Controller
             'id' => 'required|integer',
             'name' => 'required|string',
             'photoUrls' => 'required|array',
-            'photoUrls.*' => 'required|url',
+            //powinno być url a nie string ale jak zweryfikowałem dane to nie które mają wartości string i przy edycji użytkownik mógłby mieć dziwne błedy którrych by nie rozumiał. W ten sposób zapewniam spójność aplikacji
+            'photoUrls.*' => 'required|string',
             'status' => 'required|string|in:available,pending,sold',
             'category.name' => 'nullable|string',
             'tags.*.name' => 'nullable|string',
@@ -40,7 +41,6 @@ class PetController extends Controller
             return redirect()->route('pets.index')->with('error', "Pet with ID {$id} already exists.");
         }
 
-
         $createResponse = Http::post("https://petstore.swagger.io/v2/pet", $request->all());
         if ($createResponse->successful()) {
             return redirect()->route('pets.index')->with('status', "Pet with ID {$id} added successfully!");
@@ -51,7 +51,6 @@ class PetController extends Controller
 
     public function update(Request $request, $id)
     {
-
         $request->validate([
             'name' => 'required|string',
             'photoUrls' => 'required|array',
@@ -60,7 +59,6 @@ class PetController extends Controller
             'category.name' => 'nullable|string',
             'tags.*.name' => 'nullable|string',
         ]);
-
 
         $response = Http::get("https://petstore.swagger.io/v2/pet/{$id}");
         if ($response->status() === 404) {
