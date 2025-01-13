@@ -12,9 +12,14 @@ class PetController extends Controller
         $allPets = [];
 
         foreach ($statuses as $status) {
+            //applies to all api endpoints. You can add them in env but in this case there is no need. This is not a secret api then let me use the api implementation method directly in the controller
             $response = Http::get("https://petstore.swagger.io/v2/pet/findByStatus", ['status' => $status]);
             if ($response->successful()) {
                 $allPets = array_merge($allPets, $response->json());
+            }
+
+            if ($response->failed()) {
+                return back()->withErrors(['api_error' => 'Failed to fetch pets from API. Please try again later.']);
             }
         }
 
@@ -27,7 +32,7 @@ class PetController extends Controller
             'id' => 'required|integer',
             'name' => 'required|string',
             'photoUrls' => 'required|array',
-            //powinno być url a nie string ale jak zweryfikowałem dane to nie które mają wartości string i przy edycji użytkownik mógłby mieć dziwne błedy którrych by nie rozumiał. W ten sposób zapewniam spójność aplikacji
+            //should be url and not string but as I verified the data is not which have string values and when editing the user could have strange errors that he would not understand. In this way I ensure the consistency of the application
             'photoUrls.*' => 'required|string',
             'status' => 'required|string|in:available,pending,sold',
             'category.name' => 'nullable|string',
