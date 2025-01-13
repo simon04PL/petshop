@@ -17,4 +17,4 @@ use App\Http\Controllers\PetController;
 Route::get('/pets', [PetController::class, 'index'])->name('pets.index');
 Route::post('/pets', [PetController::class, 'store'])->name('pets.store');
 Route::put('/pets/{id}', [PetController::class, 'update'])->name('pets.update');
-Route::delete('/pets/{id}', [PetController::class, 'destroy'])->name('pets.destroy');
+Route::delete('/pets/{id}', [PetController::class, 'delete'])->name('pets.delete');
