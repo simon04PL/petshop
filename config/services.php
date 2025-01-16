@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'petstore' => [
+        'base_url' => env('PETSTORE_API_URL'),
+    ], 
+
 ];

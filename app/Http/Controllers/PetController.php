@@ -1,29 +1,28 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use App\Services\PetstoreService;
 
 class PetController extends Controller
 {
+    protected $petstoreService;
+
+    public function __construct(PetstoreService $petstoreService)
+    {
+        $this->petstoreService = $petstoreService;
+    }
+
     public function index()
     {
-        $statuses = ['available', 'pending', 'sold'];
-        $allPets = [];
+        try {
+            $allPets = $this->petstoreService->getPets();
 
-        foreach ($statuses as $status) {
-            //applies to all api endpoints. You can add them in env but in this case there is no need. This is not a secret api then let me use the api implementation method directly in the controller
-            $response = Http::get("https://petstore.swagger.io/v2/pet/findByStatus", ['status' => $status]);
-            if ($response->successful()) {
-                $allPets = array_merge($allPets, $response->json());
-            }
-
-            if ($response->failed()) {
-                return back()->withErrors(['api_error' => 'Failed to fetch pets from API. Please try again later.']);
-            }
+            return view('pets.index', compact('allPets'));
+        } catch (\Exception $e) {
+            return back()->withErrors(['api_error' => 'Failed to fetch pets from API. Please try again later.']);
         }
-
-        return view('pets.index', compact('allPets'));
     }
 
     public function store(Request $request)
@@ -32,26 +31,24 @@ class PetController extends Controller
             'id' => 'required|integer',
             'name' => 'required|string',
             'photoUrls' => 'required|array',
-            //should be url and not string but as I verified the data is not which have string values and when editing the user could have strange errors that he would not understand. In this way I ensure the consistency of the application
             'photoUrls.*' => 'required|string',
             'status' => 'required|string|in:available,pending,sold',
             'category.name' => 'nullable|string',
             'tags.*.name' => 'nullable|string',
         ]);
 
-        $id = $request->input('id');
+        try {
+            $id = $request->input('id');
 
-        $response = Http::get("https://petstore.swagger.io/v2/pet/{$id}");
-        if ($response->status() !== 404) {
-            return redirect()->route('pets.index')->with('error', "Pet with ID {$id} already exists.");
-        }
+            if ($this->petstoreService->petExists($id)) {
+                return redirect()->route('pets.index')->with('error', "Pet with ID {$id} already exists.");
+            }
 
-        $createResponse = Http::post("https://petstore.swagger.io/v2/pet", $request->all());
-        if ($createResponse->successful()) {
+            $this->petstoreService->addPet($request->all());
             return redirect()->route('pets.index')->with('status', "Pet with ID {$id} added successfully!");
+        } catch (\Exception $e) {
+            return redirect()->route('pets.index')->with('error', 'Failed to add the pet.');
         }
-
-        return redirect()->route('pets.index')->with('error', 'Failed to add the pet.');
     }
 
     public function update(Request $request, $id)
@@ -59,37 +56,35 @@ class PetController extends Controller
         $request->validate([
             'name' => 'required|string',
             'photoUrls' => 'required|array',
-            'photoUrls.*' => 'required|url',
+            'photoUrls.*' => 'required|string',
             'status' => 'required|string|in:available,pending,sold',
             'category.name' => 'nullable|string',
             'tags.*.name' => 'nullable|string',
         ]);
 
-        $response = Http::get("https://petstore.swagger.io/v2/pet/{$id}");
-        if ($response->status() === 404) {
-            return redirect()->route('pets.index')->with('error', "Pet with ID {$id} does not exist.");
-        }
+        try {
+            if (!$this->petstoreService->petExists($id)) {
+                return redirect()->route('pets.index')->with('error', "Pet with ID {$id} does not exist.");
+            }
 
-        $updateResponse = Http::put("https://petstore.swagger.io/v2/pet", array_merge($request->all(), ['id' => $id]));
-        if ($updateResponse->successful()) {
+            $this->petstoreService->updatePet(array_merge($request->all(), ['id' => $id]));
             return redirect()->route('pets.index')->with('status', "Pet with ID {$id} updated successfully!");
+        } catch (\Exception $e) {
+            return redirect()->route('pets.index')->with('error', 'Failed to update the pet.');
         }
-
-        return redirect()->route('pets.index')->with('error', 'Failed to update the pet.');
     }
 
     public function delete($id)
     {
-        $response = Http::get("https://petstore.swagger.io/v2/pet/{$id}");
-        if ($response->status() === 404) {
-            return redirect()->route('pets.index')->with('error', "Pet with ID {$id} does not exist.");
-        }
+        try {
+            if (!$this->petstoreService->petExists($id)) {
+                return redirect()->route('pets.index')->with('error', "Pet with ID {$id} does not exist.");
+            }
 
-        $deleteResponse = Http::delete("https://petstore.swagger.io/v2/pet/{$id}");
-        if ($deleteResponse->successful()) {
+            $this->petstoreService->deletePet($id);
             return redirect()->route('pets.index')->with('status', "Pet with ID {$id} deleted successfully!");
+        } catch (\Exception $e) {
+            return redirect()->route('pets.index')->with('error', 'Failed to delete the pet.');
         }
-
-        return redirect()->route('pets.index')->with('error', 'Failed to delete the pet.');
     }
 }
