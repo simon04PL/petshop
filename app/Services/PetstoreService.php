@@ -33,7 +33,20 @@ class PetstoreService
         return $allPets;
     }
     
+    public function petExists($id)
+    {
+        $response = Http::get("{$this->baseUrl}/v2/pet/{$id}");
     
+        if ($response->status() === 404) {
+            return false;
+        }
+    
+        if ($response->successful()) {
+            return true;
+        }
+    
+        throw new \Exception('Failed to check if pet exists.');
+    }
     
 
     public function addPet(array $data)
